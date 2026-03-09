@@ -47,22 +47,36 @@ const speakLetter = (letter: LetterItem) => {
     return
   }
 
-  window.speechSynthesis.cancel()
+  const synth = window.speechSynthesis
+  synth.cancel()
 
-  const utterance = new SpeechSynthesisUtterance(`${letter.upper}. ${letter.word}`)
-  utterance.lang = 'nb-NO'
-  utterance.rate = 0.85
-  utterance.pitch = 1.1
-
-  const norwegianVoice = window.speechSynthesis
+  const norwegianVoice = synth
     .getVoices()
     .find((voice) => voice.lang.toLowerCase().startsWith('nb') || voice.lang.toLowerCase().startsWith('no'))
 
-  if (norwegianVoice) {
-    utterance.voice = norwegianVoice
+  const createUtterance = (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'nb-NO'
+    utterance.rate = 0.85
+    utterance.pitch = 1.1
+
+    if (norwegianVoice) {
+      utterance.voice = norwegianVoice
+    }
+
+    return utterance
   }
 
-  window.speechSynthesis.speak(utterance)
+  const letterUtterance = createUtterance(letter.upper)
+  const wordUtterance = createUtterance(letter.word)
+
+  letterUtterance.onend = () => {
+    window.setTimeout(() => {
+      synth.speak(wordUtterance)
+    }, 500)
+  }
+
+  synth.speak(letterUtterance)
 }
 
 function App() {
