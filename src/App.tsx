@@ -42,6 +42,29 @@ const letters: LetterItem[] = [
 
 const randomIndex = () => Math.floor(Math.random() * letters.length)
 
+const speakLetter = (letter: LetterItem) => {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    return
+  }
+
+  window.speechSynthesis.cancel()
+
+  const utterance = new SpeechSynthesisUtterance(`${letter.upper}. ${letter.word}`)
+  utterance.lang = 'nb-NO'
+  utterance.rate = 0.85
+  utterance.pitch = 1.1
+
+  const norwegianVoice = window.speechSynthesis
+    .getVoices()
+    .find((voice) => voice.lang.toLowerCase().startsWith('nb') || voice.lang.toLowerCase().startsWith('no'))
+
+  if (norwegianVoice) {
+    utterance.voice = norwegianVoice
+  }
+
+  window.speechSynthesis.speak(utterance)
+}
+
 function App() {
   const [selected, setSelected] = useState<LetterItem>(letters[0])
   const [round, setRound] = useState(0)
@@ -73,6 +96,7 @@ function App() {
       setFeedback(`Hurra! ${target.upper} er for ${target.word}.`)
       setCorrectCount((count) => count + 1)
       setSelected(letter)
+      speakLetter(letter)
       startNewRound()
       return
     }
@@ -112,7 +136,7 @@ function App() {
           <p className="word-example">
             {selected.emoji} <strong>{selected.word}</strong>
           </p>
-          <p className="hint">Trykk på et kort under for å bytte bokstav.</p>
+          <p className="hint">Trykk på et kort under for å bytte bokstav og høre den lest opp.</p>
         </article>
 
         <article className="card-soft quiz-panel">
@@ -165,7 +189,10 @@ function App() {
               <button
                 key={letter.upper}
                 className={`letter-card${isActive ? ' active' : ''}`}
-                onClick={() => setSelected(letter)}
+                onClick={() => {
+                  setSelected(letter)
+                  speakLetter(letter)
+                }}
               >
                 <span className="letter-card-upper">{letter.upper}</span>
                 <span className="letter-card-lower">{letter.lower}</span>
